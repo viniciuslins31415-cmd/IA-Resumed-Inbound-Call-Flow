@@ -1,0 +1,368 @@
+inboundCall:
+  name: IAResumed Inbound Call Flow
+  description: Inbound call flow, integrated with Claude to make a resume of the interaction
+  division: Home
+  startUpRef: "/inboundCall/tasks/task[Start Task_12]"
+  defaultLanguage: pt-br
+  supportedLanguages:
+    pt-br:
+      defaultLanguageSkill:
+        noValue: true
+      textToSpeech:
+        defaultEngine:
+          voice: Viviane
+  initialGreeting:
+    tts: Bem vindo a Securitem, sua seguradora que fornece seguro auto e seguro de vida!
+  variables:
+    - stringVariable:
+        name: Flow.IVRPath
+        initialValue:
+          noValue: true
+    - stringVariable:
+        name: Flow.path
+        initialValue:
+          noValue: true
+    - integerVariable:
+        name: Flow.tentativas
+        initialValue:
+          noValue: true
+  settingsActionDefaults:
+    playAudioOnSilence:
+      allowedRepeatCount:
+        lit: 5
+      silenceDuration:
+        lit:
+          seconds: 1
+      timeout:
+        lit:
+          seconds: 40
+    detectSilence:
+      silenceDuration:
+        lit:
+          seconds: 1
+      timeout:
+        lit:
+          seconds: 40
+    callData:
+      processingPrompt:
+        noValue: true
+    collectInput:
+      interDigitTimeout:
+        lit:
+          seconds: 3
+      noEntryTimeout:
+        lit:
+          seconds: 5
+    dialByExtension:
+      interDigitTimeout:
+        lit:
+          seconds: 6
+    transferToUser:
+      connectTimeout:
+        noValue: true
+    transferToNumber:
+      connectTimeout:
+        noValue: true
+    transferToGroup:
+      connectTimeout:
+        noValue: true
+    transferToFlowSecure:
+      connectTimeout:
+        lit:
+          seconds: 15
+  settingsErrorHandling:
+    errorHandling:
+      disconnect:
+        none: true
+    preHandlingAudio:
+      tts: Ocorreu um erro. Tente sua chamada novamente.
+  settingsMenu:
+    extensionDialingMaxDelay:
+      lit:
+        seconds: 1
+    listenForExtensionDialing:
+      lit: true
+    menuSelectionTimeout:
+      lit:
+        seconds: 10
+    repeatCount:
+      lit: 3
+  settingsPrompts:
+    ensureAudioInPrompts: false
+    promptMediaToValidate:
+      - mediaType: audio
+      - mediaType: tts
+  settingsSpeechRec:
+    completeMatchTimeout:
+      lit:
+        ms: 100
+    incompleteMatchTimeout:
+      lit:
+        ms: 1500
+    maxSpeechLengthTimeout:
+      lit:
+        seconds: 20
+    minConfidenceLevel:
+      lit: 50
+    asrCompanyDir: none
+    asrEnabledOnFlow: true
+    suppressRecording: true
+  tasks:
+    - task:
+        name: Start Task
+        refId: Start Task_12
+        variables:
+          - stringVariable:
+              name: Task.Input
+              initialValue:
+                noValue: true
+              isInput: false
+              isOutput: false
+          - integerVariable:
+              name: Task.tentativaAtual
+              initialValue:
+                noValue: true
+              isInput: false
+              isOutput: false
+        actions:
+          - updateData:
+              name: Update Data
+              statements:
+                - string:
+                    variable: Flow.IVRPath
+                    value:
+                      lit: Inicio |
+                - integer:
+                    variable: Flow.tentativas
+                    value:
+                      exp: "0"
+          - loop:
+              name: Loop
+              currentIndex:
+                var: Task.tentativaAtual
+              loopCount:
+                lit: 3
+              outputs:
+                loop:
+                  actions:
+                    - collectInput:
+                        name: Collect Input
+                        inputData:
+                          var: Task.Input
+                        digits:
+                          exact: 1
+                        interDigitTimeout:
+                          noValue: true
+                        noEntryTimeout:
+                          noValue: true
+                        inputAudio:
+                          tts: Digite um para seguro auto e dois para seguro de vida
+                        acceptJustStar:
+                          lit: true
+                        acceptJustPound:
+                          lit: true
+                        verificationType: none
+                        outputs:
+                          success:
+                            actions:
+                              - switch:
+                                  name: Switch
+                                  evaluate:
+                                    firstTrue:
+                                      default:
+                                        actions:
+                                          - updateData:
+                                              name: Update Data
+                                              statements:
+                                                - string:
+                                                    variable: Flow.path
+                                                    value:
+                                                      lit: opção inválida |
+                                                - string:
+                                                    variable: Flow.IVRPath
+                                                    value:
+                                                      exp: Append(Flow.IVRPath, Flow.path)
+                                          - playAudio:
+                                              name: Play Audio
+                                              audio:
+                                                tts: Opção inválida. Tente novamente
+                                      cases:
+                                        - case:
+                                            value:
+                                              exp: ToInt(Task.Input) == 1
+                                            actions:
+                                              - updateData:
+                                                  name: Update Data
+                                                  statements:
+                                                    - string:
+                                                        variable: Flow.path
+                                                        value:
+                                                          lit: seguro auto |
+                                                    - string:
+                                                        variable: Flow.IVRPath
+                                                        value:
+                                                          exp: Append(Flow.IVRPath, Flow.path)
+                                              - loopExit:
+                                                  name: Exit Loop
+                                        - case:
+                                            value:
+                                              exp: ToInt(Task.Input) == 2
+                                            actions:
+                                              - updateData:
+                                                  name: Update Data
+                                                  statements:
+                                                    - string:
+                                                        variable: Flow.path
+                                                        value:
+                                                          lit: seguro vida|
+                                                    - string:
+                                                        variable: Flow.IVRPath
+                                                        value:
+                                                          exp: Append(Flow.IVRPath, Flow.path)
+                                              - loopExit:
+                                                  name: Exit Loop
+                          failure:
+                            actions:
+                              - updateData:
+                                  name: Update Data
+                                  statements:
+                                    - string:
+                                        variable: Flow.path
+                                        value:
+                                          lit: sem resposta ou erro na coleta |
+                                    - string:
+                                        variable: Flow.IVRPath
+                                        value:
+                                          exp: Append(Flow.IVRPath, Flow.path)
+                              - playAudio:
+                                  name: Play Audio
+                                  audio:
+                                    tts: Não recebi sua resposta. Vamos tentar de novo
+          - jumpToTask:
+              name: Jump to Reusable Task
+              targetTaskRef: "/inboundCall/tasks/task[Transfer Task_21]"
+    - task:
+        name: Transfer Task
+        refId: Transfer Task_21
+        variables:
+          - promptVariable:
+              name: Task.blank
+              initialValue:
+                noValue: true
+              isInput: false
+              isOutput: false
+          - stringVariable:
+              name: Task.interactionResume
+              initialValue:
+                noValue: true
+              isInput: false
+              isOutput: false
+        actions:
+          - updateData:
+              name: Update Data
+              statements:
+                - string:
+                    variable: Flow.path
+                    value:
+                      lit: Transfere para um agente |
+                - string:
+                    variable: Flow.IVRPath
+                    value:
+                      exp: Append(Flow.IVRPath, Flow.path)
+                - prompt:
+                    variable: Task.blank
+                    value:
+                      exp: ToPrompt(NOT_SET)
+                - string:
+                    variable: Task.interactionResume
+                    value:
+                      exp: "Append(\"Resumo indisponível. Caminho: \", Flow.IVRPath)"
+          - playAudio:
+              name: Play Audio
+              audio:
+                tts: Espere um momento enquanto transferimos para um agente
+          - callData:
+              name: Call Data Action
+              processingPrompt:
+                noValue: true
+              timeout:
+                lit:
+                  minutes: 1
+              category:
+                Web Services Data Actions:
+                  dataAction:
+                    Anthropic Data Action 2:
+                      inputs:
+                        ivrPath:
+                          exp: Flow.IVRPath
+                      successOutputs:
+                        summary:
+                          var: Task.interactionResume
+                      failureOutputs:
+                        errorCode:
+                          noValue: true
+                        status:
+                          noValue: true
+                        correlationId:
+                          noValue: true
+                        entityId:
+                          noValue: true
+                        entityName:
+                          noValue: true
+                        userMessage:
+                          noValue: true
+                        userParamsMessage:
+                          noValue: true
+                        userParams.key:
+                          noValue: true
+                        userParams.value:
+                          noValue: true
+                        details.errorCode:
+                          noValue: true
+                        details.fieldName:
+                          noValue: true
+                        details.entityId:
+                          noValue: true
+                        details.entityName:
+                          noValue: true
+          - setParticipantData:
+              name: Set Participant Data
+              attributes:
+                - attribute:
+                    name:
+                      lit: Resumo
+                    value:
+                      exp: Task.interactionResume
+          - transferToAcd:
+              name: Transfer to ACD
+              targetQueue:
+                lit:
+                  name: Customer Service
+              preTransferAudio:
+                exp: AudioPlaybackOptions(ToAudio(Task.blank), true)
+              failureTransferAudio:
+                exp: AudioPlaybackOptions(ToAudio(Task.blank), true)
+              priority:
+                lit: 0
+              preferredAgents:
+                noValue: true
+              languageSkill:
+                noValue: true
+              directAgent:
+                noValue: true
+              failureOutputs:
+                errorType:
+                  noValue: true
+                errorMessage:
+                  noValue: true
+              skillExpressionFilters:
+                noValue: true
+              outputs:
+                failure:
+                  actions:
+                    - playAudio:
+                        name: Play Audio
+                        audio:
+                          tts: Não foi possível transferir sua chamada, tente novamente mais tarde
+          - disconnect:
+              name: Disconnect
