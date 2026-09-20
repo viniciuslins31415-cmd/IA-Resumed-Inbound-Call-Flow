@@ -9,7 +9,7 @@
       "headers": {
         "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
-        "x-api-key": "AnthropicAPICKey"
+        "x-api-key": "quase kkk"
       },
       "requestTemplate": "{\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 300,\n  \"system\": \"Você resume o caminho de um cliente em um IVR para o agente que vai atendê-lo. Responda em português, em no máximo 2 frases objetivas, sem inventar informações que não estejam no caminho.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"${esc.jsonString(${input.ivrPath})}\"\n    }\n  ]\n}"
     },
