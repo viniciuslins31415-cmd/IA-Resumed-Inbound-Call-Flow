@@ -87,7 +87,7 @@ Pré-requisitos: uma organização Genesys Cloud com Architect e uma chave de AP
 
 ## Próximos passos
 
-- [ ] [Script do agente exibindo o resumo]
+- [x] [Script do agente exibindo o resumo]
 - [ ] Enriquecer o caminho com dados coletados (reconhecimento de voz, consultas em outros sistemas)
 - [ ] Registrar a origem do resumo (IA ou fallback)
 - [ ] Medir a latência da Data Action
