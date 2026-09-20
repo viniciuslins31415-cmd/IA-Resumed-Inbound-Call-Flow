@@ -1,0 +1,52 @@
+{
+  "name": "Anthropic Data Action 2 - Exported 2026-09-20 @ 9:55",
+  "integrationType": "custom-rest-actions",
+  "actionType": "custom",
+  "config": {
+    "request": {
+      "requestUrlTemplate": "https://api.anthropic.com/v1/messages",
+      "requestType": "POST",
+      "headers": {
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+        "x-api-key": "AnthropicAPICKey"
+      },
+      "requestTemplate": "{\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 300,\n  \"system\": \"Você resume o caminho de um cliente em um IVR para o agente que vai atendê-lo. Responda em português, em no máximo 2 frases objetivas, sem inventar informações que não estejam no caminho.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"${esc.jsonString(${input.ivrPath})}\"\n    }\n  ]\n}"
+    },
+    "response": {
+      "translationMap": {
+        "summaryText": "$.content[0].text"
+      },
+      "translationMapDefaults": {
+        "summaryText": "\"\""
+      },
+      "successTemplate": "{ \"summary\": \"${esc.jsonString(${summaryText})}\" }"
+    }
+  },
+  "contract": {
+    "input": {
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "ivrPath"
+        ],
+        "properties": {
+          "ivrPath": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "output": {
+      "successSchema": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "secure": false
+}
